@@ -6,9 +6,10 @@ from pathlib import Path
 def main():
     root=Path(__file__).resolve().parent
     release=root/'release';release.mkdir(exist_ok=True)
-    source=['app.py','core.py','i18n.py','jobs.py','build_release.py','package_release.py','requirements.txt','requirements-build.txt','README.md','VALIDATION.md','.gitignore','.github/workflows/build.yml','tests/test_core.py','tests/test_ui.py','tests/test_extended.py','icon.ico']
+    docs=['README.md','README.zh-CN.md','VALIDATION.md','VALIDATION.zh-CN.md']
+    source=['app.py','core.py','i18n.py','jobs.py','build_release.py','package_release.py','requirements.txt','requirements-build.txt','.gitignore','.github/workflows/build.yml','tests/test_core.py','tests/test_ui.py','tests/test_extended.py','icon.ico']+docs
     licenses=[p.relative_to(root).as_posix() for p in (root/'licenses').glob('*') if p.is_file()]
-    for name,files in [('PixelSD-0.3.0-source.zip',source+licenses),('PixelSD-0.3.0-windows-x64.zip',['dist/PixelSD.exe','README.md','VALIDATION.md']+licenses)]:
+    for name,files in [('PixelSD-0.3.0-source.zip',source+licenses),('PixelSD-0.3.0-windows-x64.zip',['dist/PixelSD.exe']+docs+licenses)]:
         with zipfile.ZipFile(release/name,'w',zipfile.ZIP_DEFLATED) as z:
             for relative in files:
                 target='PixelSD.exe' if relative=='dist/PixelSD.exe' else relative

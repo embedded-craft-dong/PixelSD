@@ -1,77 +1,69 @@
-# PixelSD 0.3.0
+# PixelSD
 
-[下载 Windows 便携版](https://github.com/embedded-craft-dong/PixelSD/releases/latest) · [验证记录](VALIDATION.md)
+**English** | [简体中文](README.zh-CN.md)
 
-离线 Windows 图片工作台，为单片机生成 RGB565 图像和 C 数组，并检查二进制图片。默认 240 × 320、RGB565、小端像素；支持调整尺寸、颜色顺序和字节顺序。
+An offline image workspace for embedded displays. Convert images to RGB565 binary files or C arrays, preview the result, and prepare numbered batches for your device.
 
-## 使用
+[**Download for Windows**](https://github.com/embedded-craft-dong/PixelSD/releases/latest) · [Format reference & verification](VALIDATION.md)
 
-解压便携包，双击 PixelSD.exe，无须安装 Python。
+## Features
 
-1. 添加图片、添加文件夹，或从资源管理器拖入。文件夹只扫描当前层，不递归，自动去重。
-2. 在“常用设置”设置尺寸、起止编号、导出类型和适配方式。宽高范围各为 1–2047 px。
-3. 选择输出目录，开始转换。队列显示预计输出名及完成、失败、跳过、停止状态。
-4. 确认后复制到 SD 卡。原图保持不变，同名输出整组跳过，不自动覆盖。
+- **Batch conversion:** add images or folders, drag and drop, sort filenames naturally, and choose an output number range.
+- **Flexible display settings:** resolution presets and custom dimensions, RGB565 / BGR565, and little-endian / big-endian pixel data.
+- **Image preparation:** fit, crop or stretch; rotate, mirror, and choose a background color.
+- **Export options:** BIN / R56 files, `uint8_t` or `uint16_t` C arrays, and header-only or separate `.h` / `.c` files.
+- **Preview and inspection:** compare the fitted image with decoded RGB565 output, or open a BIN / R56 file to inspect its dimensions and pixels.
+- **Batch controls:** per-file results, storage estimates, and retries that retain the original numbering and settings.
+- **Bilingual interface:** switch between English and Chinese without clearing your queue or settings.
 
-右上角切换中文 / English，不清除队列、参数和结果。Ctrl + O 添加图片。程序不保存个人路径或配置，重启恢复默认。
+## Quick start
 
-## 队列与重试
+1. Download **`PixelSD-0.3.0-windows-x64.zip`** from [Releases](https://github.com/embedded-craft-dong/PixelSD/releases/latest).
+2. Extract the archive and double-click **`PixelSD.exe`**. Python is not required.
+3. Add your images. In **Basic**, choose the dimensions, number range, and export format.
+4. Select an output folder and click **Convert**.
+5. Copy the generated files to your SD card, or add the C files to your firmware project.
 
-自然排序让 2.png 排在 10.png 前面；也可以逐项上移、下移和移除。修改起始编号会自动计算结束编号，手动输入结束编号时数量必须匹配。
+The default configuration is **240 × 320, RGB565, little-endian**, with the full image fitted inside a black background. Choose settings that match your display firmware.
 
-“重试失败项”仅重试失败项目，使用原编号、原输出目录和完整参数快照。已完成、同名跳过和停止项目不属于失败重试。重新执行整批队列则使用当前参数。停止保留已完成文件，在当前图片处理返回后生效。
+All image processing takes place locally. No account or image upload is needed.
 
-## 设置与预览
+## Working with batches
 
-- 常用：尺寸、编号、导出类型、适配方式、可选索引和存储量估算。
-- 高级：RGB/BGR、端序、C 数组类型和布局、顺时针旋转、水平/垂直镜像、留边颜色。先旋转再镜像，最后缩放；透明区域也合成到所选背景颜色。
-- 预览：适配后原图、实际 RGB565 数据还原、左右对比（左原图、右还原）。预览按所选颜色顺序正确解码，不模拟错误的硬件配置，显示时缩放到窗口大小。
-- 打开 BIN / R56：读取尺寸与文件头、校验精确长度、显示解码结果。读取端序和 RGB/BGR 可独立调整。拖入二进制也可打开，多个二进制只查看第一个。不修改文件。
+Folder imports include supported images in the selected folder. Natural sorting places `2.png` before `10.png`; you can also reorder files individually. The queue shows the expected output name before conversion.
 
-每张像素存储量为宽 × 高 × 2 字节，也就是 C 数组数据本身的大小。固件占用还受链接、对齐和存储属性影响。磁盘输出为近似估算，不含索引文件；C 文本受空白和宏影响。
+Original images are preserved. If any output file for an image already exists, that image is skipped. **Retry failed** uses each failed image's original number, destination, and conversion settings. Completed and skipped items are left as they are.
 
-## 导出格式
+The **Advanced** tab contains pixel byte order, color order, C array layout, rotation, mirroring, and background color. **Preview / Inspect** provides a side-by-side comparison and a binary-file viewer.
 
-支持 BIN + R56（默认）、仅 C 数组、二进制 + C 数组。
+## Choosing an export format
 
-C 数组支持 uint16_t 像素和 uint8_t 字节：
+| Format | Typical use |
+| --- | --- |
+| BIN + R56 | Loading image files from an SD card |
+| C array | Embedding image data in firmware |
+| Binary + C array | Generating both from the same image batch |
 
-- uint16_t 的 RGB565 红色为 0xF800，端序选项不改变数值，内存字节序由目标 CPU 决定。
-- uint8_t 小端红色为 0x00, 0xF8，大端为 0xF8, 0x00，与二进制像素字节一致。
-- 单头文件使用 static const，被多个源文件包含时可能产生多份数据。
-- 头文件 + 源文件在 .h 中声明 extern const，在 .c 中唯一定义。把生成的 .c 加入工程编译；提供宽高宏，声明支持 C++ 包含。
+For projects with several source files, use **Header + source** to keep the array definition in one `.c` file. Add that file to your build and include its `.h` file where needed.
 
-数组按行排列，不含容器文件头。RGB/BGR 影响像素编码。屏幕传输端序需要与硬件一致，不生成 PROGMEM 等平台专用属性。
+See the [technical reference](VALIDATION.md) for byte order, file headers, index files, and device compatibility.
 
-## 二进制格式与索引
+## Run from source
 
-BIN：小端 uint32 文件头 `4 | (宽度 << 10) | (高度 << 21)`，后接宽 × 高 × 2 字节像素。默认头为 `04 C0 03 28`，总长 153604。
-
-R56：`R565` + 小端 uint16 宽度 + uint16 高度 + uint32 零，后接像素。默认总长 153612。头始终小端，像素端序单独设置。
-
-BIN 宽高范围来自 [LVGL 8 的 11 位字段](https://github.com/lvgl/lvgl/blob/v8.3.11/src/draw/lv_img_buf.h)。检查器仅支持此处的 16 位 TRUE_COLOR BIN 与 R56 布局，不支持所有通用 .bin；不能自动识别端序或 RGB/BGR。
-
-可选索引要求二进制输出、RGB565、小端。生成 INDEX_起始编号_结束编号.JSON，只含本批次成功文件，不含原图名称。不改写已有 INDEX.JSON；重试索引只列此次成功项。是否合并为完整清单取决于固件。
-
-## 源码与构建
-
-Windows x64，Python 3.14（带 Tcl/Tk）：
+Use Windows x64 and Python 3.14 with Tcl/Tk:
 
 ```powershell
 python -m venv .venv
 .venv/Scripts/python -m pip install -r requirements-build.txt
-.venv/Scripts/python -m unittest discover -s tests -v
 .venv/Scripts/python app.py
+```
+
+To test and package:
+
+```powershell
+.venv/Scripts/python -m unittest discover -s tests -v
 .venv/Scripts/python build_release.py
 .venv/Scripts/python package_release.py
 ```
 
-生成 dist/PixelSD.exe 及 release/ 中的便携 ZIP、白名单源码 ZIP、SHA256 校验。C 编译集成测试检测到 GCC 才运行，否则跳过。依赖版本固定，不保证构建逐字节一致。CI 手动触发，不自动公开发布。
-
-拖放基于 [tkinterdnd2](https://github.com/pmgagne/tkinterdnd2) 与 tkdnd。普通用户权限运行即可；Windows 可能阻止普通资源管理器向管理员权限程序拖放。
-
-## 隐私与限制
-
-程序不联网、不上传、不遥测、不保存日志或配置。输出不包含原图名称、磁盘路径或 EXIF/GPS。测试只用合成素材。源码 ZIP 按白名单生成，排除个人图片、凭据、缓存和本机路径；源码提交仓库，便携包上传 Releases。第三方许可证在 licenses/。
-
-支持 Pillow 可解码的 JPG/PNG/BMP/WebP/TIFF，动画只取首帧。不做色彩配置文件管理，不支持抖动、RGB888 或单色。高分辨率预览和转换可能需要数秒。未签名，未在独立无 Python 电脑与实际开发板验收，见 VALIDATION.md。
+The executable is written to `dist/`, and release archives to `release/`. Third-party license notices are included in [`licenses/`](licenses/).

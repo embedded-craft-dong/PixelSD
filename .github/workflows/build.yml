@@ -17,3 +17,6 @@ jobs:
             dist/PixelSD.exe
             licenses/
             README.md
+            README.zh-CN.md
+            VALIDATION.md
+            VALIDATION.zh-CN.md
